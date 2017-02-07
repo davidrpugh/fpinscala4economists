@@ -69,14 +69,75 @@ object List {
   }
 
   /** Exercise 3.13 */
-  def foldRight[A,B](as: List[A], z: B)(f: (A, B) => B): B = as match {
-    case Nil => z
-    case Cons(h, t) => f(h, foldRight(t, z)(f))
+  def foldRight[A,B](as: List[A], z: B)(f: (A, B) => B): B = {
+    foldLeft(reverse(as), z)((a, b) => f(b, a))
   }
 
   /** Exercise 3.14 */
   def append[A](a1: List[A], a2: List[A]): List[A] = {
     foldRight(a1, a2)((a, as) => Cons(a, as))
+  }
+
+  /** Exercise 3.15 */
+  def concat[A](lists: List[List[A]]): List[A] = {
+    foldLeft(lists, Nil: List[A])(append)
+  }
+
+  /** Exercise 3.16 */
+  def increment(xs: List[Int]): List[Int] = {
+    foldLeft(xs, Nil: List[Int])((t, h) => Cons(h+1, t))
+  }
+
+  /** Exercise 3.17 */
+  def doublesToStrings(xs: List[Double]): List[String] = {
+    foldRight(xs, Nil: List[String])((h, t) => Cons(h.toString, t))
+  }
+
+  /** Exercise 3.18 */
+  def map[A, B](as: List[A])(f: A => B): List[B] = {
+    foldRight(as, Nil: List[B])((h, t) => Cons(f(h), t))
+  }
+
+  /** Exercise 3.19 */
+  def filter[A](as: List[A])(f: A => Boolean): List[A] = {
+    foldRight(as, Nil: List[A])((h, t) => if (f(h)) Cons(h, t) else t)
+  }
+
+  /** Exercise 3.20 */
+  def flatMap[A,B](as: List[A])(f: A => List[B]): List[B] = {
+    foldRight(as, Nil: List[B])((a, l) => append(f(a), l))
+  }
+
+  /** Exercise 3.21 */
+  def filter2[A](as: List[A])(f: A => Boolean): List[A] = {
+    flatMap(as)(a => if (f(a)) Cons(a, Nil) else Nil)
+  }
+
+  /** Exercise 3.22 */
+  def pairwiseadd(a1: List[Int], a2: List[Int]): List[Int] = (a1, a2) match {
+    case (Nil, _) | (_, Nil) => Nil
+    case (Cons(h1, t1), Cons(h2, t2)) => Cons(h1 + h2, pairwiseadd(t1, t2))
+  }
+
+  /** Exercise 3.23 */
+  def zipWith[A, B, C](as: List[A], bs: List[B])(f:(A, B) => C): List[C] = (as, bs) match {
+    case (Nil, _) | (_, Nil) => Nil
+    case (Cons(a, ta), Cons(b, tb)) => Cons(f(a, b), zipWith(ta, tb)(f))
+  }
+
+  /** Exercise 3.24 */
+  @annotation.tailrec
+  def startsWith[A](l: List[A], prefix: List[A]): Boolean = (l, prefix) match {
+    case (_, Nil) => true
+    case (Cons(h1, t1), Cons(h2, t2)) if h1 == h2 => startsWith(t1, t2)
+    case _ => false
+  }
+
+  @annotation.tailrec
+  def hasSubsequence[A](l: List[A], subSequence: List[A]): Boolean = l match {
+    case Nil => subSequence == Nil
+    case _ if startsWith(l, subSequence) => true
+    case Cons(h, t) => hasSubsequence(t, subSequence)
   }
 
   def apply[A](as: A*): List[A] =
@@ -102,6 +163,20 @@ val xs: List[Int] = List(1,2,3,4,5)
 val ex1 = List.dropWhile(xs)(x => x < 4)
 List.reverse(xs)
 
+List.concat(List(xs, xs, xs))
 List.sum(List.foldRight(List(1,2,3), Nil:List[Int])(Cons(_,_)))
 
 List.append(xs, xs)
+
+
+// test of the filter method
+val ints = List(1,2,3,4,5,6,7,8,9,10)
+val odds = List.filter(ints)(x => x % 2 == 1)
+assert(odds == List(1,3,5,7,9))
+
+// test of the filter2 method
+val evens = List.filter2(ints)(x => x % 2 == 0)
+assert(evens == List(2,4,6,8,10))
+
+// test of the flatMap method
+assert(List.flatMap(List(1,2,3))(i => List(i-1,i)) == List(0,1,1,2,2,3))
