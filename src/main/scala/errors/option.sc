@@ -52,4 +52,24 @@ def map2[A,B,C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] = {
 }
 
 /** Exercise 4.4 */
-def sequence[A](a: List[Option[A]]): Option[List[A]]
+def sequence[A](as: List[Option[A]]): Option[List[A]] = as match {
+  case Nil => Some(Nil)
+  case h :: tail => h.flatMap(a => sequence(tail).map(bs =>  a :: bs ))
+}
+
+/** Exercise 4.5 */
+def traverse[A, B](a: List[A])(f: A => Option[B]): Option[List[B]] = a match {
+  case Nil => Some(Nil)
+  case h :: tail => f(h).flatMap( b => traverse(tail)(f).map(bs => b :: bs))
+}
+
+def sequence2[A](as: List[Option[A]]): Option[List[A]] = {
+  traverse(as)(a => a)
+}
+
+
+// quick test of my traverse implementation
+val xs = List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+val evens = xs.filter(_ % 2 == 0)
+assert(traverse(xs)(x => if (x % 2 ==0) Some(x) else None) == None)
+assert(traverse(evens)(x => if (x % 2 ==0) Some(x) else None) == Some(evens))
