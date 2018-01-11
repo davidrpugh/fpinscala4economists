@@ -8,6 +8,6 @@ def cobbDouglas(alpha: Double)(k: Double): Double = {
   math.pow(k, alpha)
 }
 
-solowModel(k => math.pow(k, 0.33))(0.05, 0.05, 0.05, 0.15)(1.0)
+solowModel(cobbDouglas(0.33))(0.05, 0.05, 0.05, 0.15)(1.0)
 
 
