@@ -81,7 +81,7 @@ sealed trait Stream[+A] {
   /** Exercise 5.15 */
   def tails: Stream[Stream[A]] = {
     val result = Stream.unfold(this){
-      case s @ Cons(h, t) => Some(s, t())
+      case s @ Cons(h, t) => Some((s, t()))
       case Empty => None
     }
     result.append(Stream(Stream.empty))
@@ -96,8 +96,8 @@ sealed trait Stream[+A] {
 
   /** Exercise 5.13 */
   def take2(n: Int): Stream[A] = Stream.unfold((this, n)) {  // note the clever use of state!
-    case (Cons(h, _), 1) => Some(h(), (Stream.empty, 0))
-    case (Cons(h, t), k) => Some(h(), (t(), k - 1))
+    case (Cons(h, _), 1) => Some((h(), (Stream.empty, 0)))
+    case (Cons(h, t), k) => Some((h(), (t(), k - 1)))
     case _ => None
   }
 
@@ -114,7 +114,7 @@ sealed trait Stream[+A] {
 
   /** Exercise 5.13 */
   def takeWhile3(p: A => Boolean): Stream[A] = Stream.unfold(this) {
-    case Cons(h, t) if p(h()) => Some(h(), t())
+    case Cons(h, t) if p(h()) => Some((h(), t()))
     case _ => None
   }
 
@@ -140,7 +140,7 @@ sealed trait Stream[+A] {
 
   /** Exercise 5.13 */
   def zipWith[B, C](s2: Stream[B])(f:(A, B) => C): Stream[C] = Stream.unfold((this, s2)) {
-    case (Cons(h1, t1), Cons(h2, t2)) => Some(f(h1(), h2()), (t1(), t2()))
+    case (Cons(h1, t1), Cons(h2, t2)) => Some((f(h1(), h2()), (t1(), t2())))
     case _ => None
   }
 
@@ -152,9 +152,9 @@ sealed trait Stream[+A] {
   /** Exercise 5.13 */
   def zipWithAll[B, C](s2: Stream[B])(f: (Option[A], Option[B]) => C): Stream[C] = Stream.unfold((this, s2)) {
     case (Empty, Empty) => None
-    case (Cons(h, t), Empty) => Some(f(Some(h()), Option.empty[B]), (t(), Stream.empty[B]))
-    case (Empty, Cons(h, t)) => Some(f(Option.empty[A], Some(h())), (Stream.empty[A], t()))
-    case (Cons(h1, t1), Cons(h2, t2)) => Some(f(Some(h1()), Some(h2())), (t1(), t2()))
+    case (Cons(h, t), Empty) => Some((f(Some(h()), Option.empty[B]), (t(), Stream.empty[B])))
+    case (Empty, Cons(h, t)) => Some((f(Option.empty[A], Some(h())), (Stream.empty[A], t())))
+    case (Cons(h1, t1), Cons(h2, t2)) => Some((f(Some(h1()), Some(h2())), (t1(), t2())))
   }
 
 }
@@ -178,12 +178,12 @@ object Stream {
 
   /** Exercise 5.8 */
   def constant[A](elem: A): Stream[A] = {
-    unfold(elem)(_ => Some(elem, elem))
+    unfold(elem)(_ => Some((elem, elem)))
   }
 
   /** Exercise 5.9 */
   def from(n: Int): Stream[Int] = {
-    unfold(n)(p => Some(p, p + 1))
+    unfold(n)(p => Some((p, p + 1)))
   }
 
   /** Exercise 5.11 */

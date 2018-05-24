@@ -17,6 +17,10 @@ case class Gen[+A](sample: State[RNG, A]) {
     Gen(sample.map(f))
   }
 
+  def map2[B, C](g: Gen[B])(f: (A, B) => C): Gen[C] = {
+    Gen(sample.map2(g.sample)(f))
+  }
+
   def unsized: SGen[A] = {
     SGen((_) => this)
   }
@@ -34,13 +38,30 @@ object Gen {
     Gen(State(RNG.nonNegativeInt).map(n => start + (stop % n)))
   }
 
+  def listOf[A](g: Gen[A]): SGen[List[A]] = {
+    SGen(n => listOfN(n, g))
+  }
+
   def listOfN[A](n: Int, gen: Gen[A]): Gen[List[A]] = {
     Gen(State.sequence(List.fill(n)(gen.sample)))
   }
 
-  def pair(start: Int, stop: Int): Gen[(Int, Int)] = {
-    ???
+  def mandatory[A](gen: Gen[Option[A]]): Gen[A] = {
+    gen.map(o => o.get)  // never a good idea to call get on option!
   }
+
+  def nonEmptyListOf[A](g: Gen[A]): SGen[List[A]] = {
+    SGen(n => listOfN(n max 1, g))
+  }
+
+  def optional[A](gen: Gen[A]): Gen[Option[A]] = {
+    gen.map(a => Option(a))
+  }
+
+  def pair(start: Int, stop: Int): Gen[(Int, Int)] = for {
+    i <- choose(start, stop)
+    j <- choose(start, stop)
+  } yield (i, j)
 
   def union[A](g1: Gen[A], g2: Gen[A]): Gen[A] = {
     boolean.flatMap(b => if (b) g1 else g2)
@@ -50,7 +71,7 @@ object Gen {
     Gen(State.unit(a))
   }
 
-  def weighted[A](p1: (Gen[A],Double), p2: (Gen[A],Double)): Gen[A] = {
+  def weighted[A](p1: (Gen[A], Double), p2: (Gen[A], Double)): Gen[A] = {
     val (g1, w1) = p1; val (g2, w2) = p2
     val threshold = w1 / (w1 + w2)
     Gen(State(RNG.double).flatMap(p => if (p <= threshold) g1.sample else g2.sample))

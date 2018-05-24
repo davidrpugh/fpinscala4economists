@@ -3,13 +3,12 @@ package parallelism
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.{Callable, CountDownLatch, ExecutorService}
 
-import scala.language.higherKinds
+
+// one possible implementation of Par...
+trait Par[+A] extends ((ExecutorService) => Future[A])
 
 
 object Par {
-
-  // one possible implementation of Par...
-  type Par[+A] = (ExecutorService) => Future[A]
 
   /** Converts a function `f` to one that evaluates its result asynchronously. */
   def asyncF[A,B](f: A => B): A => Par[B] = {
